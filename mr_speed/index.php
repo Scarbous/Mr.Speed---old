@@ -180,11 +180,18 @@ function filter_print_scripts_array($js_array){
 		if( $wp_scripts->query( $js, 'queue' ) ) :
 			$query = $wp_scripts->query( $js );
 			
+			$url = get_bloginfo('url');
+			
 			$all_js[$js] = array(
 				'regenerate'	=> false,
-				'orgsrc'		=> str_replace(get_bloginfo('url'),'',$query->src),
+				'orgsrc'		=> str_replace(array($url,WP_CONTENT_URL),array('','/wp-content'),$query->src),
 				'cachefile'		=> $js.'.js',
 			);
+			
+		#	print_r(WP_CONTENT_URL);
+		#	die();
+			
+			
 			if( file_exists( $this->cache_path.$all_js[$js]['cachefile']) ) :
 				if( filectime( rtrim(ABSPATH,'/').$all_js[$js]['orgsrc'] ) < filectime($this->cache_path.$all_js[$js]['cachefile']) ):
 	
@@ -387,6 +394,8 @@ function filter_print_styles_array($css_array){
 	foreach(explode("\n",$this->config['css']['exclude']) as $ecss) :
 		$exlude_css[] = trim($ecss);
 	endforeach;
+#	print_r($wp_styles->to_do);
+#	die();
 	foreach( $wp_styles->to_do as $csskey => $css) :
 		if(in_array($css, $exlude_css)) :
 			continue;
@@ -394,10 +403,12 @@ function filter_print_styles_array($css_array){
 		$wp_styles->done[] = $wp_styles->to_do[$csskey];
 		unset( $wp_styles->to_do[$csskey] );
 		
+		$url = get_bloginfo('url');
+		
 		$query = $wp_styles->query( $css );
 		$all_css[$css] = array(
 			'regenerate'	=> false,
-			'orgsrc'		=> str_replace(get_bloginfo('url'),'',$query->src),
+			'orgsrc'		=> str_replace(array($url,WP_CONTENT_URL),array('','/wp-content'),$query->src),
 			'cachefile'		=> $css.'.css',
 		);
 		if( file_exists( $this->cache_path.$all_css[$css]['cachefile']) ) :
@@ -413,6 +424,7 @@ function filter_print_styles_array($css_array){
 		endif;
 		$include_css[] = $css;
 	endforeach;
+	
 	if(count($include_css) > 0) :
 		$filename = implode('_',$include_css);
 	
@@ -430,7 +442,7 @@ function filter_print_styles_array($css_array){
 		if( $regenerate==true || !file_exists(dirname(__FILE__).'/cache/'.$this->configFile->css->$filename->short) ) :
 			$raw_css = '';
 			foreach( $this->configFile->css->$filename->inc as $i ) :
-				$raw_css .= file_get_contents(dirname(__FILE__).'/cache/'.$i.'.css');
+				$raw_css .= '/** '.$i.' **/'.PHP_EOL.file_get_contents(dirname(__FILE__).'/cache/'.$i.'.css');
 			endforeach;
 			$raw_css_gzip = gzencode($raw_css);
 			file_put_contents(dirname(__FILE__).'/cache/'.$this->configFile->css->$filename->short, $raw_css);
