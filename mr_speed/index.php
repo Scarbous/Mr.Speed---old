@@ -11,7 +11,7 @@ $mr_speed = new mr_speed();
 
 class mr_speed {
 	var $admin_navi = array(
-#		'main'	=> array('title' => 'Allgemein', 'file' => 'main.php'),
+	#	'main'	=> array('title' => 'Allgemein', 'file' => 'main.php'),
 		'html'	=> array('title' => 'HTML', 'file' => 'html.php'),
 		'css'	=> array('title' => 'CSS', 'file' => 'css.php'),
 		'js'	=> array('title' => 'JS', 'file' => 'js.php'),
@@ -86,6 +86,11 @@ function __construct() {
 		endif;
 	endif;
 	add_action('init',			array($this, 'init'));
+	
+	
+	add_action( 'admin_bar_menu', array($this, 'add_admin_bar_clear_cache'), 35 );
+	
+	add_action('admin_head',array($this, 'delete_cache'));
 }
 /********************
 *
@@ -485,6 +490,9 @@ function add_menu_page(){
 	add_menu_page('Mr.Speed', 'Mr.Speed', 'administrator', 'mr_speed', array($this, 'admin_page'), 'div' );
 }
 function admin_page() {
+
+
+
 ?>
 <div class="wrap" id="mr_speed">
 <h2>Mr. Speed</h2>
@@ -504,6 +512,7 @@ include('config_pages/'.$this->admin_navi[$akt_subpage]['file']);
 ?>
 	</form>
 </div><?php
+
 }
 /********************
 *
@@ -585,6 +594,44 @@ function get_input_field($name, $key=NULL) {
 	endswitch;
 	return($input);
 }
+
+function delete_cache(){
+	
+	if($_GET['page'] == 'mr_speed' && $_GET['delete_cache'] == 'yes'):
+	
+	$dir = dirname(__FILE__).'/cache/';
+	
+	if(!$dh = @opendir($dir)) return;
+	
+    while (false !== ($obj = readdir($dh))) {
+        if($obj=='.' || $obj=='..') continue;
+        if (!@unlink($dir.'/'.$obj)) SureRemoveDir($dir.'/'.$obj, true);
+    }
+
+    closedir($dh);
+	
+	header("Location:".$_SERVER['HTTP_REFERER']);
+	die();
+	endif;
+}
+
+
+function add_admin_bar_clear_cache() {
+  global $wp_admin_bar;
+  if ( !is_super_admin() || !is_admin_bar_showing() )
+      return;
+    $wp_admin_bar->add_menu( 
+        array( 'id' => 'clearspeed', 
+            'title' => __('Clear Mr. Speed'), 
+            'href' => '/wp-admin/admin.php?page=mr_speed&delete_cache=yes&redirect=true' //get_delete_post_link($current_object->term_id) 
+        ) 
+    );
+}
+
+
+
+
+
 /*******************/
 }
 
@@ -627,3 +674,4 @@ class js_compressor {
 
 }
 */
+
